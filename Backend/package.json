@@ -1,0 +1,24 @@
+{
+  "name": "huellitas-vet-api",
+  "version": "0.1.0",
+  "description": "API RESTful para la gestion de una veterinaria con Node, Express y MongoDB",
+  "license": "MIT",
+  "author": "Juan José Arango",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.2.1",
+    "mongoose": "^9.9.5",
+    "validator": "^13.15.35"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
