@@ -22,6 +22,7 @@ export class MascotasComponent implements OnInit {
   ok = '';
   especie = '';
   buscar = '';
+  editandoId: string | null = null;
 
   form = this.fb.group({
     nombre: ['', [Validators.required, Validators.minLength(2)]],
@@ -34,7 +35,10 @@ export class MascotasComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.getDuenos({ activo: 'true' }).subscribe({
-      next: (r) => this.duenos = r.duenos || []
+      next: (r) => this.duenos = r.duenos || [],
+      error: (e) => {
+        this.error = e?.error?.message || 'No se pudieron cargar los dueños. Verifique que la API esté activa.';
+      }
     });
     this.cargar();
   }
@@ -57,9 +61,31 @@ export class MascotasComponent implements OnInit {
       },
       error: (e) => {
         this.carga = false;
-        this.error = e?.error?.message || 'Error al listar mascotas';
+        this.error = e?.error?.message || 'Error al listar mascotas. Verifique la conexión con la API.';
       }
     });
+  }
+
+  editar(m: any): void {
+    this.editandoId = m._id;
+    this.error = '';
+    this.ok = '';
+    const fecha = m.fechaNacimiento
+      ? new Date(m.fechaNacimiento).toISOString().slice(0, 10)
+      : '';
+    this.form.patchValue({
+      nombre: m.nombre,
+      especie: m.especie,
+      raza: m.raza || 'Criollo',
+      peso: m.peso ?? null,
+      fechaNacimiento: fecha,
+      dueno: m.dueno?._id || m.dueno || ''
+    });
+  }
+
+  cancelarEdicion(): void {
+    this.editandoId = null;
+    this.form.reset({ especie: 'perro', raza: 'Criollo', peso: null, fechaNacimiento: '', dueno: '' });
   }
 
   guardar(): void {
@@ -77,14 +103,18 @@ export class MascotasComponent implements OnInit {
       raza: raw.raza || 'Criollo',
       dueno: raw.dueno
     };
-    if (raw.peso) body.peso = Number(raw.peso);
+    if (raw.peso != null && raw.peso !== ('' as any)) body.peso = Number(raw.peso);
     if (raw.fechaNacimiento) body.fechaNacimiento = raw.fechaNacimiento;
 
-    this.api.saveMascota(body).subscribe({
+    const pet$ = this.editandoId
+      ? this.api.updateMascota(this.editandoId, body)
+      : this.api.saveMascota(body);
+
+    pet$.subscribe({
       next: () => {
         this.enviando = false;
-        this.ok = 'Mascota registrada';
-        this.form.reset({ especie: 'perro', raza: 'Criollo' });
+        this.ok = this.editandoId ? 'Mascota actualizada' : 'Mascota registrada';
+        this.cancelarEdicion();
         this.cargar();
       },
       error: (e) => {
@@ -94,8 +124,19 @@ export class MascotasComponent implements OnInit {
     });
   }
 
+  desactivar(m: any): void {
+    if (!confirm(`¿Desactivar a ${m.nombre}? Se conserva el historial de citas.`)) return;
+    this.api.desactivarMascota(m._id).subscribe({
+      next: () => {
+        this.ok = 'Mascota desactivada';
+        this.cargar();
+      },
+      error: (e) => this.error = e?.error?.message || 'No se pudo desactivar'
+    });
+  }
+
   eliminar(m: any): void {
-    if (!confirm(`¿Eliminar a ${m.nombre}?`)) return;
+    if (!confirm(`¿Eliminar a ${m.nombre}? Solo es posible si no tiene historial de citas.`)) return;
     this.api.deleteMascota(m._id).subscribe({
       next: () => {
         this.ok = 'Mascota eliminada';

@@ -10,6 +10,7 @@ router.post('/mascota/save', mascotaController.save);
 router.get('/mascotas', mascotaController.getMascotas);
 router.get('/mascota/:id', mascotaController.getMascota);
 router.put('/mascota/:id', mascotaController.update);
+router.patch('/mascota/:id/desactivar', mascotaController.desactivar);
 router.delete('/mascota/:id', mascotaController.delete);
 
 router.post('/mascota/upload-image/:id', (req, res, next) => {

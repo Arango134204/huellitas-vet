@@ -3,7 +3,9 @@
 /**
  * Carga inicial de la clínica HuellitasVet (Pereira).
  * Uso: npm run seed
- * Reemplaza el contenido de las colecciones duenos, mascotas y citas.
+ *
+ * ADVERTENCIA: elimina TODOS los documentos de duenos, mascotas y citas
+ * antes de insertar la carga inicial. No ejecutar si hay datos que conservar.
  */
 
 require('dotenv').config();

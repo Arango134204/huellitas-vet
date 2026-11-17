@@ -63,11 +63,12 @@ const controller = {
 
     delete: async (req, res) => {
         try {
-            const tieneMascotas = await Mascota.exists({ dueno: req.params.id, activa: true });
+            // Integridad completa: cualquier mascota (activa o inactiva) bloquea el borrado
+            const tieneMascotas = await Mascota.exists({ dueno: req.params.id });
             if (tieneMascotas) {
                 return res.status(409).send({
                     status: 'error',
-                    message: 'No se puede eliminar: el dueño tiene mascotas activas. Desactívelo o reasigne las mascotas.'
+                    message: 'No se puede eliminar: el dueño tiene mascotas asociadas (activas o inactivas). Desactívelo o reasigne las mascotas.'
                 });
             }
 

@@ -3,21 +3,32 @@
 const Cita = require('../models/cita');
 const Mascota = require('../models/mascota');
 const { responderError } = require('../helpers/errores');
+const {
+    inicioFinDia,
+    validarDisponibilidad,
+    conCandadoAgenda
+} = require('../helpers/agenda');
 
-const MAX_CITAS_DIA_VET = 8;
-const VENTANA_MINUTOS = 30;
+async function poblarCita(id) {
+    return Cita.findById(id).populate({
+        path: 'mascota',
+        select: 'nombre especie imagen dueno',
+        populate: { path: 'dueno', select: 'nombre telefono' }
+    });
+}
 
-function inicioFinDia(fechaStr) {
-    const inicio = new Date(fechaStr + 'T00:00:00');
-    const fin = new Date(fechaStr + 'T23:59:59.999');
-    return { inicio, fin };
+function responderRegla(res, err) {
+    if (err.status) {
+        return res.status(err.status).send({ status: 'error', message: err.message });
+    }
+    return null;
 }
 
 const controller = {
 
     save: async (req, res) => {
         try {
-            const mascota = await Mascota.findById(req.body.mascota).populate('dueno');
+            const mascota = await Mascota.findById(req.body.mascota);
             if (!mascota) {
                 return res.status(404).send({ status: 'error', message: 'La mascota indicada no existe' });
             }
@@ -25,72 +36,30 @@ const controller = {
                 return res.status(409).send({ status: 'error', message: 'No se puede agendar cita a una mascota inactiva' });
             }
 
-            const fecha = new Date(req.body.fecha);
-            if (Number.isNaN(fecha.getTime())) {
-                return res.status(400).send({ status: 'error', message: 'La fecha de la cita no es válida' });
-            }
-
-            // Regla 1: no agendar en el pasado
-            if (fecha.getTime() < Date.now() - 60000) {
-                return res.status(400).send({
-                    status: 'error',
-                    message: 'No se puede agendar una cita en el pasado'
-                });
-            }
-
             const veterinario = (req.body.veterinario || '').trim();
-            if (!veterinario) {
-                return res.status(400).send({ status: 'error', message: 'El veterinario es obligatorio' });
-            }
+            const fechaRaw = req.body.fecha;
 
-            // Regla 2: no solapar citas del mismo veterinario (±30 min)
-            const desde = new Date(fecha.getTime() - VENTANA_MINUTOS * 60000);
-            const hasta = new Date(fecha.getTime() + VENTANA_MINUTOS * 60000);
-            const choque = await Cita.findOne({
-                veterinario,
-                estado: 'pendiente',
-                fecha: { $gte: desde, $lte: hasta }
-            });
-            if (choque) {
-                return res.status(409).send({
-                    status: 'error',
-                    message: `El veterinario ${veterinario} ya tiene una cita pendiente en esa franja (±${VENTANA_MINUTOS} min)`
+            const citaStored = await conCandadoAgenda(veterinario || 'sin-vet', fechaRaw || new Date(), async () => {
+                const { fechaCita, veterinario: vet } = await validarDisponibilidad({
+                    veterinario,
+                    fecha: fechaRaw
                 });
-            }
 
-            // Regla 3: cupo diario por veterinario
-            const dia = fecha.toISOString().slice(0, 10);
-            const { inicio, fin } = inicioFinDia(dia);
-            const delDia = await Cita.countDocuments({
-                veterinario,
-                estado: { $ne: 'cancelada' },
-                fecha: { $gte: inicio, $lte: fin }
-            });
-            if (delDia >= MAX_CITAS_DIA_VET) {
-                return res.status(409).send({
-                    status: 'error',
-                    message: `El veterinario ${veterinario} ya alcanzó el cupo de ${MAX_CITAS_DIA_VET} citas para ese día`
+                const cita = new Cita({
+                    mascota: mascota._id,
+                    fecha: fechaCita,
+                    motivo: req.body.motivo,
+                    veterinario: vet,
+                    observaciones: req.body.observaciones,
+                    origen: req.body.origen || 'web',
+                    estado: 'pendiente'
                 });
-            }
-
-            const cita = new Cita({
-                mascota: mascota._id,
-                fecha,
-                motivo: req.body.motivo,
-                veterinario,
-                observaciones: req.body.observaciones,
-                origen: req.body.origen || 'web',
-                estado: 'pendiente'
+                return cita.save();
             });
 
-            const citaStored = await cita.save();
-            const poblada = await Cita.findById(citaStored._id).populate({
-                path: 'mascota',
-                populate: { path: 'dueno', select: 'nombre telefono' }
-            });
-
-            return res.status(201).send({ status: 'success', cita: poblada });
+            return res.status(201).send({ status: 'success', cita: await poblarCita(citaStored._id) });
         } catch (err) {
+            if (responderRegla(res, err)) return;
             return responderError(res, err, 'Error al agendar la cita');
         }
     },
@@ -144,7 +113,6 @@ const controller = {
                 return res.status(404).send({ status: 'error', message: 'No existe la cita' });
             }
 
-            // Regla 4: solo se puede editar motivo/observaciones/veterinario/fecha si está pendiente
             if (cita.estado !== 'pendiente') {
                 return res.status(409).send({
                     status: 'error',
@@ -152,18 +120,37 @@ const controller = {
                 });
             }
 
-            const campos = ['motivo', 'observaciones', 'veterinario', 'fecha', 'mascota'];
-            for (const campo of campos) {
-                if (req.body[campo] !== undefined) cita[campo] = req.body[campo];
+            if (req.body.mascota !== undefined) {
+                const mascota = await Mascota.findById(req.body.mascota);
+                if (!mascota) {
+                    return res.status(404).send({ status: 'error', message: 'La mascota indicada no existe' });
+                }
+                if (mascota.activa === false) {
+                    return res.status(409).send({ status: 'error', message: 'No se puede asignar una mascota inactiva' });
+                }
+                cita.mascota = mascota._id;
             }
 
-            await cita.save();
-            const actualizada = await Cita.findById(cita._id).populate({
-                path: 'mascota',
-                populate: { path: 'dueno', select: 'nombre telefono' }
+            if (req.body.motivo !== undefined) cita.motivo = req.body.motivo;
+            if (req.body.observaciones !== undefined) cita.observaciones = req.body.observaciones;
+
+            const nuevaFecha = req.body.fecha !== undefined ? req.body.fecha : cita.fecha;
+            const nuevoVet = req.body.veterinario !== undefined ? req.body.veterinario : cita.veterinario;
+
+            const actualizada = await conCandadoAgenda(nuevoVet || 'sin-vet', nuevaFecha, async () => {
+                const { fechaCita, veterinario: vet } = await validarDisponibilidad({
+                    veterinario: nuevoVet,
+                    fecha: nuevaFecha,
+                    excluirCitaId: cita._id
+                });
+                cita.fecha = fechaCita;
+                cita.veterinario = vet;
+                return cita.save();
             });
-            return res.status(200).send({ status: 'success', cita: actualizada });
+
+            return res.status(200).send({ status: 'success', cita: await poblarCita(actualizada._id) });
         } catch (err) {
+            if (responderRegla(res, err)) return;
             return responderError(res, err, 'Error al actualizar la cita');
         }
     },
@@ -180,7 +167,6 @@ const controller = {
                 return res.status(400).send({ status: 'error', message: 'Debe indicar el nuevo estado' });
             }
 
-            // Regla 5: transiciones de estado permitidas
             if (!Cita.puedeTransicionar(cita.estado, nuevo)) {
                 return res.status(409).send({
                     status: 'error',
@@ -189,7 +175,6 @@ const controller = {
                 });
             }
 
-            // Regla: no marcar como atendida una cita incompleta (sin motivo)
             if (nuevo === 'atendida' && (!cita.motivo || !cita.motivo.trim())) {
                 return res.status(400).send({
                     status: 'error',
@@ -203,12 +188,7 @@ const controller = {
             }
             await cita.save();
 
-            const actualizada = await Cita.findById(cita._id).populate({
-                path: 'mascota',
-                populate: { path: 'dueno', select: 'nombre telefono' }
-            });
-
-            return res.status(200).send({ status: 'success', cita: actualizada });
+            return res.status(200).send({ status: 'success', cita: await poblarCita(cita._id) });
         } catch (err) {
             return responderError(res, err, 'Error al cambiar el estado de la cita');
         }

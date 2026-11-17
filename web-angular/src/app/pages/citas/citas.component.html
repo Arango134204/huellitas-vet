@@ -9,7 +9,7 @@
 @if (ok) { <div class="alerta ok">{{ ok }}</div> }
 
 <section class="panel">
-  <h2>Agendar cita</h2>
+  <h2>{{ editandoId ? 'Editar cita pendiente' : 'Agendar cita' }}</h2>
   <form [formGroup]="form" (ngSubmit)="guardar()">
     <div class="form-grid">
       <label>Mascota
@@ -48,8 +48,11 @@
     </div>
     <div class="acciones" style="margin-top:1rem">
       <button class="btn" type="submit" [disabled]="enviando">
-        {{ enviando ? 'Agendando…' : 'Agendar' }}
+        {{ enviando ? 'Guardando…' : (editandoId ? 'Actualizar cita' : 'Agendar') }}
       </button>
+      @if (editandoId) {
+        <button class="btn secundario" type="button" (click)="cancelarEdicion()" [disabled]="enviando">Cancelar edición</button>
+      }
     </div>
   </form>
 </section>
@@ -95,9 +98,12 @@
           <td><span class="badge" [class]="c.estado">{{ c.estado }}</span></td>
           <td class="acciones">
             @if (c.estado === 'pendiente') {
-              <button class="btn peque" type="button" (click)="cambiarEstado(c, 'atendida')">Atender</button>
-              <button class="btn peque secundario" type="button" (click)="cambiarEstado(c, 'cancelada')">Cancelar</button>
-              <button class="btn peque peligro" type="button" (click)="eliminar(c)">Eliminar</button>
+              <button class="btn peque secundario" type="button" (click)="editar(c)" [disabled]="!!cambiandoEstadoId">Editar</button>
+              <button class="btn peque" type="button" (click)="cambiarEstado(c, 'atendida')" [disabled]="cambiandoEstadoId === c._id || !!cambiandoEstadoId">
+                {{ cambiandoEstadoId === c._id ? '…' : 'Atender' }}
+              </button>
+              <button class="btn peque secundario" type="button" (click)="cambiarEstado(c, 'cancelada')" [disabled]="!!cambiandoEstadoId">Cancelar</button>
+              <button class="btn peque peligro" type="button" (click)="eliminar(c)" [disabled]="!!cambiandoEstadoId">Eliminar</button>
             } @else {
               <span class="muted">Cerrada</span>
             }

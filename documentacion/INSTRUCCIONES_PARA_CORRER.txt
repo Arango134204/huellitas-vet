@@ -52,6 +52,10 @@ Cargue la base de datos inicial de la clínica (dueños, mascotas y citas):
 
   npm run seed
 
+ADVERTENCIA: npm run seed BORRA las colecciones duenos, mascotas y citas antes de volver a cargarlas.
+No lo ejecute si ya tiene datos que quiera conservar.
+Use siempre: cd Backend  (B mayúscula).
+
 Arranque el servidor:
 
   npm start

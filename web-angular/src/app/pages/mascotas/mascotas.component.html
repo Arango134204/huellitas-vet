@@ -9,7 +9,7 @@
 @if (ok) { <div class="alerta ok">{{ ok }}</div> }
 
 <section class="panel">
-  <h2>Registrar mascota</h2>
+  <h2>{{ editandoId ? 'Editar mascota' : 'Registrar mascota' }}</h2>
   <form [formGroup]="form" (ngSubmit)="guardar()">
     <div class="form-grid">
       <label>Nombre
@@ -50,8 +50,11 @@
     </div>
     <div class="acciones" style="margin-top:1rem">
       <button class="btn" type="submit" [disabled]="enviando">
-        {{ enviando ? 'Guardando…' : 'Guardar' }}
+        {{ enviando ? 'Guardando…' : (editandoId ? 'Actualizar' : 'Guardar') }}
       </button>
+      @if (editandoId) {
+        <button class="btn secundario" type="button" (click)="cancelarEdicion()" [disabled]="enviando">Cancelar</button>
+      }
     </div>
   </form>
 </section>
@@ -103,6 +106,8 @@
           <td>{{ m.dueno?.nombre }}</td>
           <td class="acciones">
             <a class="btn peque secundario" [routerLink]="['/mascotas', m._id]">Detalle</a>
+            <button class="btn peque secundario" type="button" (click)="editar(m)">Editar</button>
+            <button class="btn peque secundario" type="button" (click)="desactivar(m)">Desactivar</button>
             <button class="btn peque peligro" type="button" (click)="eliminar(m)">Eliminar</button>
           </td>
         </tr>

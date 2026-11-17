@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "HuellitasVet API",
-    "description": "Colección de pruebas del proyecto final Desarrollo Web 2 — Juan José Arango",
+    "description": "Colección con scripts pm.test. Flujo Angular (manual): dashboard → crear/editar dueño y mascota → subir foto → agendar/editar cita → atender. Si la API está caída, las peticiones fallan por red (evidencia de dependencia del backend).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -16,10 +16,23 @@
       "item": [
         {
           "name": "GET Servidor OK",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Servidor OK', () => pm.expect(pm.response.json().message).to.eql('Servidor OK'));"
+          ]}}],
+          "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/" }
+        },
+        {
+          "name": "API caída (documentar fallo de red)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Si API caída no hay 200', function () {",
+            "  if (pm.response.code) { pm.expect(pm.response.code).to.not.eql(200); }",
+            "});"
+          ]}}],
           "request": {
             "method": "GET",
-            "header": [],
-            "url": "{{baseUrl}}/"
+            "url": "http://127.0.0.1:3999/",
+            "description": "Puerto incorrecto a propósito. Debe fallar la conexión: evidencia de que el panel depende de la API."
           }
         }
       ]
@@ -29,74 +42,32 @@
       "item": [
         {
           "name": "Listar dueños",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/duenos"
-          }
-        },
-        {
-          "name": "Buscar dueños",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/duenos?buscar=laura"
-          }
-        },
-        {
-          "name": "Crear dueño",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Pedro Pérez\",\n  \"documento\": \"1088999888\",\n  \"telefono\": \"3101234567\",\n  \"email\": \"pedro@mail.com\",\n  \"direccion\": \"Centro, Pereira\"\n}"
-            },
-            "url": "{{baseUrl}}/api/dueno/save"
-          }
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const d = pm.response.json();",
+            "pm.test('Trae duenos', () => pm.expect(d.duenos).to.be.an('array'));",
+            "if (d.duenos && d.duenos[0]) pm.collectionVariables.set('duenoId', d.duenos[0]._id);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/duenos" }
         },
         {
           "name": "Crear dueño inválido",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400', () => pm.response.to.have.status(400));"
+          ]}}],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Lu\",\n  \"documento\": \"1\",\n  \"telefono\": \"12\",\n  \"email\": \"malo\"\n}"
-            },
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Lu\",\n  \"documento\": \"1\",\n  \"telefono\": \"12\",\n  \"email\": \"malo\"\n}" },
             "url": "{{baseUrl}}/api/dueno/save"
           }
         },
         {
-          "name": "Ver dueño",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/dueno/{{duenoId}}"
-          }
-        },
-        {
-          "name": "Actualizar dueño",
-          "request": {
-            "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"telefono\": \"3209876543\"\n}"
-            },
-            "url": "{{baseUrl}}/api/dueno/{{duenoId}}"
-          }
-        },
-        {
-          "name": "Desactivar dueño",
-          "request": {
-            "method": "PATCH",
-            "url": "{{baseUrl}}/api/dueno/{{duenoId}}/desactivar"
-          }
-        },
-        {
-          "name": "Eliminar dueño",
-          "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/api/dueno/{{duenoId}}"
-          }
+          "name": "Eliminar dueño con mascotas",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 409 integridad', () => pm.response.to.have.status(409));"
+          ]}}],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/dueno/{{duenoId}}" }
         }
       ]
     },
@@ -105,157 +76,117 @@
       "item": [
         {
           "name": "Listar mascotas",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/mascotas"
-          }
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const d = pm.response.json();",
+            "if (d.mascotas && d.mascotas[0]) pm.collectionVariables.set('mascotaId', d.mascotas[0]._id);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/mascotas" }
         },
         {
-          "name": "Filtrar por especie",
+          "name": "Editar mascota dueño inexistente",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 404 dueño', () => pm.response.to.have.status(404));"
+          ]}}],
           "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/mascotas?especie=perro"
-          }
-        },
-        {
-          "name": "Crear mascota",
-          "request": {
-            "method": "POST",
+            "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"Luna\",\n  \"especie\": \"gato\",\n  \"raza\": \"Siamés\",\n  \"peso\": 3.5,\n  \"dueno\": \"{{duenoId}}\"\n}"
-            },
-            "url": "{{baseUrl}}/api/mascota/save"
-          }
-        },
-        {
-          "name": "Crear mascota inválida",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"nombre\": \"\",\n  \"especie\": \"dragon\",\n  \"peso\": -2,\n  \"dueno\": \"{{duenoId}}\"\n}"
-            },
-            "url": "{{baseUrl}}/api/mascota/save"
-          }
-        },
-        {
-          "name": "Ver mascota + historial",
-          "request": {
-            "method": "GET",
+            "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Test\",\n  \"especie\": \"perro\",\n  \"dueno\": \"6afc43ed28192ba51a723500\"\n}" },
             "url": "{{baseUrl}}/api/mascota/{{mascotaId}}"
           }
         },
         {
-          "name": "Subir imagen",
+          "name": "Eliminar mascota con historial",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 409 historial', () => pm.response.to.have.status(409));"
+          ]}}],
+          "request": { "method": "DELETE", "url": "{{baseUrl}}/api/mascota/{{mascotaId}}" }
+        },
+        {
+          "name": "Subir imagen válida",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200 imagen', () => pm.response.to.have.status(200));"
+          ]}}],
           "request": {
             "method": "POST",
             "body": {
               "mode": "formdata",
-              "formdata": [
-                {
-                  "key": "imagen",
-                  "type": "file",
-                  "src": ""
-                }
-              ]
+              "formdata": [{ "key": "imagen", "type": "file", "src": "", "description": "Seleccione un PNG/JPG real ≤ 2MB" }]
             },
             "url": "{{baseUrl}}/api/mascota/upload-image/{{mascotaId}}"
           }
         },
         {
-          "name": "Eliminar mascota",
+          "name": "Subir archivo no imagen (extensión .png falsa)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Rechaza contenido o MIME', () => pm.expect([400]).to.include(pm.response.code));"
+          ]}}],
           "request": {
-            "method": "DELETE",
-            "url": "{{baseUrl}}/api/mascota/{{mascotaId}}"
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "imagen", "type": "file", "src": "", "description": "Suba un .txt renombrado a .png para probar magic bytes" }]
+            },
+            "url": "{{baseUrl}}/api/mascota/upload-image/{{mascotaId}}"
           }
         }
       ]
     },
     {
-      "name": "04 Citas (operación central)",
+      "name": "04 Citas (reglas)",
       "item": [
         {
           "name": "Resumen",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/citas/resumen"
-          }
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "pm.test('Tiene resumen', () => pm.expect(pm.response.json().resumen).to.be.an('object'));"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/citas/resumen" }
         },
         {
-          "name": "Listar citas",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/citas"
-          }
+          "name": "Listar pendientes",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 200', () => pm.response.to.have.status(200));",
+            "const d = pm.response.json();",
+            "if (d.citas && d.citas[0]) pm.collectionVariables.set('citaId', d.citas[0]._id);"
+          ]}}],
+          "request": { "method": "GET", "url": "{{baseUrl}}/api/citas?estado=pendiente" }
         },
         {
-          "name": "Filtrar pendientes",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/api/citas?estado=pendiente"
-          }
-        },
-        {
-          "name": "Agendar cita",
+          "name": "Agendar en el pasado",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 pasado', () => pm.response.to.have.status(400));"
+          ]}}],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mascota\": \"{{mascotaId}}\",\n  \"fecha\": \"2026-11-20T10:00:00\",\n  \"motivo\": \"Control general\",\n  \"veterinario\": \"Dra. Salazar\",\n  \"origen\": \"web\"\n}"
-            },
+            "body": { "mode": "raw", "raw": "{\n  \"mascota\": \"{{mascotaId}}\",\n  \"fecha\": \"2020-01-01T10:00:00\",\n  \"motivo\": \"Prueba pasado\",\n  \"veterinario\": \"Dra. Salazar\"\n}" },
             "url": "{{baseUrl}}/api/cita/save"
           }
         },
         {
-          "name": "Agendar en el pasado (regla)",
+          "name": "Editar cita a fecha pasada (PUT)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 400 en update', () => pm.response.to.have.status(400));"
+          ]}}],
           "request": {
-            "method": "POST",
+            "method": "PUT",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"mascota\": \"{{mascotaId}}\",\n  \"fecha\": \"2020-01-01T10:00:00\",\n  \"motivo\": \"Prueba\",\n  \"veterinario\": \"Dra. Salazar\"\n}"
-            },
-            "url": "{{baseUrl}}/api/cita/save"
+            "body": { "mode": "raw", "raw": "{\n  \"fecha\": \"2020-01-01T10:00:00\",\n  \"veterinario\": \"Dra. Salazar\",\n  \"motivo\": \"Intento edición inválida\"\n}" },
+            "url": "{{baseUrl}}/api/cita/{{citaId}}"
           }
         },
         {
-          "name": "Marcar atendida",
+          "name": "Transición inválida atendida→pendiente",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Status 409 transición', () => pm.expect([409,400]).to.include(pm.response.code));"
+          ]}}],
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"atendida\",\n  \"observaciones\": \"Paciente estable\"\n}"
-            },
-            "url": "{{baseUrl}}/api/cita/{{citaId}}/estado"
-          }
-        },
-        {
-          "name": "Transición inválida",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"pendiente\"\n}"
-            },
-            "url": "{{baseUrl}}/api/cita/{{citaId}}/estado"
-          }
-        },
-        {
-          "name": "Cancelar cita",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"estado\": \"cancelada\"\n}"
-            },
-            "url": "{{baseUrl}}/api/cita/{{citaId}}/estado"
+            "body": { "mode": "raw", "raw": "{\n  \"estado\": \"pendiente\"\n}" },
+            "url": "{{baseUrl}}/api/cita/{{citaId}}/estado",
+            "description": "Primero marque la cita como atendida; luego ejecute este request para ver 409."
           }
         }
       ]

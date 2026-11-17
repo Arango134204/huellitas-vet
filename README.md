@@ -2,52 +2,56 @@
 
 Sistema web para la gestión de una clínica veterinaria (Pereira). Proyecto final de **Desarrollo Web II** (parte web del proyecto integrador Móvil I + Web 2).
 
-**Autor:** Juan José Arango
+**Autor:** Juan José Arango  
+**Repositorio:** https://github.com/Arango134204/huellitas-vet
 
-## Qué incluye (parte web)
+## Estructura del repositorio
 
 | Carpeta | Contenido |
 |---------|-----------|
-| `/backend` | API REST con Node.js, Express, Mongoose y MongoDB |
-| `/web-angular` | Panel de administración en Angular 19 |
-| `/documentacion` | Documentación técnica, manual, matriz de pruebas y colección Postman |
-| `/android` | Placeholder: la app móvil corresponde a Móvil I |
+| `Backend/` | API REST con Node.js, Express, Mongoose y MongoDB (**B mayúscula**) |
+| `web-angular/` | Panel de administración en Angular 19 |
+| `documentacion/` | SRS, manual, matriz de pruebas, Postman e instrucciones |
+| `android/` | Placeholder: la app móvil corresponde a Móvil I |
+
+> En Windows `backend` y `Backend` suelen ser la misma carpeta; en Linux/macOS el nombre es **sensible a mayúsculas**. Use siempre `cd Backend`.
 
 ## Stack
 
-- Node.js 24 + Express 5 + Mongoose 9 + MongoDB local
-- Multer (carga de fotos de mascotas, máx. 2 MB)
+- Node.js 20+ / Express 5 / Mongoose 9 / MongoDB local
+- Multer (imágenes: extensión + MIME + magic bytes, máx. 2 MB)
 - Angular 19 (rutas, servicios HTTP, formularios reactivos)
 - dotenv, cors, validator
 
 ## Entidades
 
 1. **Dueño** (apoyo) — CRUD + desactivación  
-2. **Mascota** (apoyo) — CRUD + imagen + historial de citas  
-3. **Cita** (operación central) — estados `pendiente → atendida | cancelada`
-
-## Requisitos
-
-- Node.js 20+
-- MongoDB en `mongodb://127.0.0.1:27017`
-- Angular CLI (opcional; se usa `npx ng`)
+2. **Mascota** (apoyo) — CRUD + edición + imagen + historial + desactivación  
+3. **Cita** (operación central) — crear, editar (si pendiente), estados `pendiente → atendida | cancelada`
 
 ## Ejecución
 
 ### 1. API
 
 ```bash
-cd backend
+cd Backend
 copy .env.example .env
 npm install
-npm run seed
 npm start
 ```
 
 Servidor: http://localhost:3900  
-Verificación: `GET /` → `{"message":"Servidor OK",...}`
 
-### 2. Panel Angular
+### 2. Carga inicial de la base (opcional)
+
+```bash
+cd Backend
+npm run seed
+```
+
+**ADVERTENCIA:** `npm run seed` **borra** todos los documentos de `duenos`, `mascotas` y `citas` y vuelve a insertar la carga inicial de la clínica. No lo ejecute si ya registró datos que quiera conservar.
+
+### 3. Panel Angular
 
 ```bash
 cd web-angular
@@ -56,16 +60,17 @@ npm start
 ```
 
 Panel: http://localhost:4200  
-La URL de la API está en `web-angular/src/environments/environment.ts`.
+URL de la API: `web-angular/src/environments/environment.ts`.
 
-### 3. Postman
+### 4. Postman
 
 Importar `documentacion/HuellitasVet.postman_collection.json`.  
-Variables: `baseUrl`, `duenoId`, `mascotaId`, `citaId`.
+Variables: `baseUrl`, `duenoId`, `mascotaId`, `citaId`.  
+Incluye scripts de prueba (`pm.test`) para códigos HTTP esperados.
 
 ## Variables de entorno
 
-Ver `backend/.env.example` (no subir `.env` real):
+`Backend/.env.example` (no subir `.env` real):
 
 ```
 PORT=3900
@@ -74,23 +79,18 @@ MONGODB_URI=mongodb://127.0.0.1:27017/huellitas-vet
 
 ## Reglas de negocio (servidor)
 
-1. No agendar citas en el pasado.  
-2. No solapar citas del mismo veterinario (±30 min).  
-3. Cupo máximo de 8 citas/día por veterinario.  
-4. Transiciones de estado: solo `pendiente → atendida` o `pendiente → cancelada`.  
-5. No eliminar un dueño con mascotas activas; no eliminar mascota con citas pendientes; no eliminar cita atendida.
-
-## Demostración sugerida
-
-1. Abrir Angular → Inicio (resumen y citas de hoy).  
-2. Registrar dueño y mascota.  
-3. Subir foto en el detalle de la mascota.  
-4. Agendar cita y marcarla como atendida.  
-5. En Postman: intentar cita en el pasado y transición inválida (deben fallar).
+1. No agendar ni editar citas hacia el pasado.  
+2. No solapar citas del mismo veterinario (±30 min) — también al **editar**.  
+3. Cupo máximo de 8 citas/día por veterinario — también al **editar**.  
+4. Transiciones: solo `pendiente → atendida` o `pendiente → cancelada`.  
+5. No eliminar dueño con mascotas (activas o inactivas); no eliminar mascota con historial de citas; no eliminar cita atendida.  
+6. Candado por veterinario/día para reducir condiciones de carrera en el mismo proceso Node.
 
 ## Documentación
 
-- `documentacion/Documentacion_Tecnica_HuellitasVet.docx`
-- `documentacion/Manual_Usuario_HuellitasVet.docx`
-- `documentacion/Matriz_de_Pruebas_HuellitasVet.docx`
+- `documentacion/Documento_Entrega_Final_HuellitasVet.docx` — SRS  
+- `documentacion/Correcciones_Feedback_Docente.docx` — arreglos tras la revisión  
+- `documentacion/INSTRUCCIONES_PARA_CORRER.txt`  
+- `documentacion/Explicacion_del_Codigo_HuellitasVet.docx`  
+- `documentacion/Matriz_de_Pruebas_HuellitasVet.docx`  
 - `documentacion/HuellitasVet.postman_collection.json`

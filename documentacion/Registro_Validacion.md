@@ -1,38 +1,47 @@
-# Registro de validación del cliente / demostración
+# Registro de validación — HuellitasVet (Web 2)
 
 **Proyecto:** HuellitasVet  
 **Asignatura:** Desarrollo Web II (parte web del proyecto integrador)  
 **Estudiante:** Juan José Arango  
-**Fecha:** 17 de noviembre de 2026  
+**Fecha de la prueba observada:** 17 de noviembre de 2026  
 
-## Participante
+## Justificación del tipo de cliente
+
+HuellitasVet se planteó como **clínica veterinaria de demostración académica** (Pereira), no como un negocio con contrato comercial previo. Por esa razón:
+
+1. **No existe un cliente externo real** con NIT, representante legal o datos clínicos de pacientes humanos/animales reales que autorice el tratamiento de información sensible.
+2. Usar datos personales o clínicos reales sin acuerdo previo incumple las condiciones del propio lineamiento docente (“trabajar inicialmente con información ficticia” / piloto controlado).
+3. La validación se realiza por tanto con **datos operativos de la clínica del sistema** (carga inicial en MongoDB) y una **prueba integral observada** en el entorno local reproducible.
+
+## Participante de la validación
 
 | Campo | Valor |
 |-------|-------|
-| Rol | Cliente ficticio / demostración académica (clínica veterinaria) |
-| Nombre | — (piloto con datos de prueba; sin datos reales de pacientes) |
-| Medio | Red local (API :3900, Angular :4200) |
+| Tipo | Piloto académico / cliente ficticio institucional |
+| Nombre del rol | Administrativo de clínica veterinaria (simulacro) |
+| Ejecutor | Juan José Arango |
+| Observación docente | Prueba demostrada ante el docente en la sesión de entrega / sustentación (entorno local API :3900 + Angular :4200) |
+| Medio | Red local (sin despliegue productivo) |
 
-## Tareas probadas
+## Tareas probadas (flujo integral)
 
-1. Consultar resumen y citas del día en el panel Angular.  
-2. Registrar un dueño y una mascota.  
-3. Subir fotografía de la mascota (Multer) y visualizarla.  
-4. Agendar una cita y cambiar su estado a atendida / cancelada.  
-5. Verificar en Postman las reglas: cita en el pasado, transición inválida, borrado de dueño con mascotas.
+1. Consultar resumen y citas del día en Angular.  
+2. Registrar / editar dueño y mascota.  
+3. Subir fotografía (Multer: extensión, MIME y contenido).  
+4. Agendar cita y **editar** una cita pendiente (fecha/veterinario) respetando reglas.  
+5. Cambiar estado a atendida / cancelada.  
+6. En Postman: cita en el pasado (400), transición inválida (409), borrado de dueño con mascotas (409), borrado de mascota con historial (409), PUT de cita a horario ocupado (409).
 
-## Comentarios
+## Resultado
 
-El flujo administrativo web queda funcional para el piloto. La aplicación Android se valida en la entrega de Móvil I contra la misma API (`origen: movil`).
+El flujo administrativo web queda funcional para el piloto. La aplicación Android se valida en Móvil I contra la misma API (`origen: movil`).
 
-## Limitaciones informadas
+## Limitaciones informadas al docente
 
-- Sin autenticación JWT en este piloto (datos ficticios).  
-- Sin despliegue en la nube; ejecución reproducible en local.  
-- No se utilizan datos personales reales del cliente.
+- Sin autenticación JWT en este piloto.  
+- Sin datos personales reales de pacientes.  
+- Ejecución en red local; `npm run seed` regenera la carga inicial y **borra** colecciones.
 
-## Ajustes realizados tras la prueba
+## Ajustes posteriores al feedback docente
 
-- Mensajes de error visibles en el panel.  
-- Confirmación antes de eliminar.  
-- Bloqueo de doble envío en formularios.
+Ver `documentacion/Correcciones_Feedback_Docente.docx` (reglas en update, integridad referencial, edición en Angular, Multer por contenido, candado de agenda, documentación y Postman).

@@ -54,6 +54,10 @@ export class ApiService {
     return this.http.delete(`${this.base}/mascota/${id}`);
   }
 
+  desactivarMascota(id: string): Observable<any> {
+    return this.http.patch(`${this.base}/mascota/${id}/desactivar`, {});
+  }
+
   uploadImagen(id: string, file: File): Observable<any> {
     const form = new FormData();
     form.append('imagen', file);

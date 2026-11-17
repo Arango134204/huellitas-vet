@@ -6,25 +6,37 @@ const Mascota = require('../models/mascota');
 const Dueno = require('../models/dueno');
 const Cita = require('../models/cita');
 const { responderError } = require('../helpers/errores');
+const { verificarContenidoImagen } = require('../helpers/multer');
 
 const RUTA_IMAGENES = path.join(__dirname, '../uploads/mascotas');
+
+async function asegurarDuenoValido(duenoId) {
+    const dueno = await Dueno.findById(duenoId);
+    if (!dueno) {
+        const err = new Error('El dueño indicado no existe');
+        err.status = 404;
+        throw err;
+    }
+    if (dueno.activo === false) {
+        const err = new Error('No se puede asignar la mascota a un dueño inactivo');
+        err.status = 409;
+        throw err;
+    }
+    return dueno;
+}
 
 const controller = {
 
     save: async (req, res) => {
         try {
-            const dueno = await Dueno.findById(req.body.dueno);
-            if (!dueno) {
-                return res.status(404).send({ status: 'error', message: 'El dueño indicado no existe' });
-            }
-            if (dueno.activo === false) {
-                return res.status(409).send({ status: 'error', message: 'No se puede registrar una mascota a un dueño inactivo' });
-            }
-
+            await asegurarDuenoValido(req.body.dueno);
             const mascota = new Mascota(req.body);
             const mascotaStored = await mascota.save();
             return res.status(201).send({ status: 'success', mascota: mascotaStored });
         } catch (err) {
+            if (err.status) {
+                return res.status(err.status).send({ status: 'error', message: err.message });
+            }
             return responderError(res, err, 'Error al guardar la mascota');
         }
     },
@@ -65,27 +77,39 @@ const controller = {
 
     update: async (req, res) => {
         try {
-            const mascotaUpdated = await Mascota.findByIdAndUpdate(
-                req.params.id,
-                req.body,
-                { returnDocument: 'after', runValidators: true }
-            );
-            if (!mascotaUpdated) {
+            const mascota = await Mascota.findById(req.params.id);
+            if (!mascota) {
                 return res.status(404).send({ status: 'error', message: 'No existe la mascota' });
             }
+
+            // Si se reasigna el dueño, se vuelve a validar existencia y estado activo
+            if (req.body.dueno !== undefined) {
+                await asegurarDuenoValido(req.body.dueno);
+            }
+
+            const campos = ['nombre', 'especie', 'raza', 'fechaNacimiento', 'peso', 'dueno', 'activa', 'imagen'];
+            for (const campo of campos) {
+                if (req.body[campo] !== undefined) mascota[campo] = req.body[campo];
+            }
+
+            const mascotaUpdated = await mascota.save();
             return res.status(200).send({ status: 'success', mascota: mascotaUpdated });
         } catch (err) {
+            if (err.status) {
+                return res.status(err.status).send({ status: 'error', message: err.message });
+            }
             return responderError(res, err, 'Error al actualizar la mascota');
         }
     },
 
     delete: async (req, res) => {
         try {
-            const pendientes = await Cita.exists({ mascota: req.params.id, estado: 'pendiente' });
-            if (pendientes) {
+            // Conservar trazabilidad: no borrar si existe cualquier cita (pendiente, atendida o cancelada)
+            const tieneHistorial = await Cita.exists({ mascota: req.params.id });
+            if (tieneHistorial) {
                 return res.status(409).send({
                     status: 'error',
-                    message: 'No se puede eliminar: la mascota tiene citas pendientes. Cancélelas o desactive la mascota.'
+                    message: 'No se puede eliminar: la mascota tiene historial de citas. Desactívela (activa=false) para conservar la trazabilidad.'
                 });
             }
 
@@ -99,11 +123,30 @@ const controller = {
         }
     },
 
+    desactivar: async (req, res) => {
+        try {
+            const mascota = await Mascota.findByIdAndUpdate(
+                req.params.id,
+                { activa: false },
+                { returnDocument: 'after' }
+            );
+            if (!mascota) {
+                return res.status(404).send({ status: 'error', message: 'No existe la mascota' });
+            }
+            return res.status(200).send({ status: 'success', mascota });
+        } catch (err) {
+            return responderError(res, err, 'Error al desactivar la mascota');
+        }
+    },
+
     upload: async (req, res) => {
         try {
             if (!req.file) {
                 return res.status(400).send({ status: 'error', message: 'No se envió ninguna imagen (campo imagen)' });
             }
+
+            // Validar contenido real (magic bytes), no solo la extensión
+            verificarContenidoImagen(req.file.path);
 
             const mascota = await Mascota.findById(req.params.id);
             if (!mascota) {
@@ -120,7 +163,10 @@ const controller = {
             await mascota.save();
             return res.status(200).send({ status: 'success', mascota });
         } catch (err) {
-            if (req.file) fs.unlink(req.file.path, () => {});
+            if (req.file && fs.existsSync(req.file.path)) fs.unlink(req.file.path, () => {});
+            if (err.status) {
+                return res.status(err.status).send({ status: 'error', message: err.message });
+            }
             return responderError(res, err, 'Error al subir la imagen');
         }
     },

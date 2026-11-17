@@ -18,10 +18,12 @@ export class CitasComponent implements OnInit {
   mascotas: any[] = [];
   carga = true;
   enviando = false;
+  cambiandoEstadoId: string | null = null;
   error = '';
   ok = '';
   filtroEstado = '';
   filtroFecha = '';
+  editandoId: string | null = null;
 
   form = this.fb.group({
     mascota: ['', Validators.required],
@@ -34,7 +36,10 @@ export class CitasComponent implements OnInit {
 
   ngOnInit(): void {
     this.api.getMascotas().subscribe({
-      next: (r) => this.mascotas = r.mascotas || []
+      next: (r) => this.mascotas = r.mascotas || [],
+      error: (e) => {
+        this.error = e?.error?.message || 'No se pudieron cargar las mascotas disponibles. Verifique que la API esté activa.';
+      }
     });
     this.cargar();
   }
@@ -53,8 +58,38 @@ export class CitasComponent implements OnInit {
       },
       error: (e) => {
         this.carga = false;
-        this.error = e?.error?.message || 'Error al listar citas';
+        this.error = e?.error?.message || 'Error al listar citas. Verifique la conexión con la API.';
       }
+    });
+  }
+
+  editar(c: any): void {
+    if (c.estado !== 'pendiente') return;
+    this.editandoId = c._id;
+    this.error = '';
+    this.ok = '';
+    const d = new Date(c.fecha);
+    const fecha = d.toISOString().slice(0, 10);
+    const hora = d.toTimeString().slice(0, 5);
+    this.form.patchValue({
+      mascota: c.mascota?._id || c.mascota || '',
+      fecha,
+      hora,
+      motivo: c.motivo,
+      veterinario: c.veterinario,
+      observaciones: c.observaciones || ''
+    });
+  }
+
+  cancelarEdicion(): void {
+    this.editandoId = null;
+    this.form.patchValue({
+      mascota: '',
+      fecha: '',
+      hora: '10:00',
+      motivo: '',
+      veterinario: 'Dra. Salazar',
+      observaciones: ''
     });
   }
 
@@ -76,32 +111,42 @@ export class CitasComponent implements OnInit {
       origen: 'web'
     };
 
-    this.api.saveCita(body).subscribe({
+    const req$ = this.editandoId
+      ? this.api.updateCita(this.editandoId, body)
+      : this.api.saveCita(body);
+
+    req$.subscribe({
       next: () => {
         this.enviando = false;
-        this.ok = 'Cita agendada';
-        this.form.patchValue({ motivo: '', observaciones: '' });
+        this.ok = this.editandoId ? 'Cita actualizada' : 'Cita agendada';
+        this.cancelarEdicion();
         this.cargar();
       },
       error: (e) => {
         this.enviando = false;
-        this.error = e?.error?.errores?.join('. ') || e?.error?.message || 'No se pudo agendar';
+        this.error = e?.error?.errores?.join('. ') || e?.error?.message || 'No se pudo guardar la cita';
       }
     });
   }
 
   cambiarEstado(c: any, estado: string): void {
+    if (this.cambiandoEstadoId) return;
     const obs = estado === 'atendida'
       ? prompt('Observaciones de la atención (opcional):', c.observaciones || '') ?? undefined
       : undefined;
 
+    this.cambiandoEstadoId = c._id;
+    this.error = '';
     this.api.cambiarEstado(c._id, estado, obs || undefined).subscribe({
       next: () => {
+        this.cambiandoEstadoId = null;
         this.ok = `Cita marcada como ${estado}`;
-        this.error = '';
         this.cargar();
       },
-      error: (e) => this.error = e?.error?.message || 'No se pudo cambiar el estado'
+      error: (e) => {
+        this.cambiandoEstadoId = null;
+        this.error = e?.error?.message || 'No se pudo cambiar el estado';
+      }
     });
   }
 
