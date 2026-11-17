@@ -11,7 +11,7 @@ Sistema web para la gestión de una clínica veterinaria (Pereira). Proyecto fin
 |---------|-----------|
 | `Backend/` | API REST con Node.js, Express, Mongoose y MongoDB (**B mayúscula**) |
 | `web-angular/` | Panel de administración en Angular 19 |
-| `documentacion/` | SRS, manual, matriz de pruebas, Postman e instrucciones |
+| `documentacion/` | Entrega final, correcciones, Postman e instrucciones |
 | `android/` | Placeholder: la app móvil corresponde a Móvil I |
 
 > En Windows `backend` y `Backend` suelen ser la misma carpeta; en Linux/macOS el nombre es **sensible a mayúsculas**. Use siempre `cd Backend`.
@@ -88,9 +88,9 @@ MONGODB_URI=mongodb://127.0.0.1:27017/huellitas-vet
 
 ## Documentación
 
-- `documentacion/Documento_Entrega_Final_HuellitasVet.docx` — SRS  
+- `documentacion/Documento_Entrega_Final_HuellitasVet.docx` — entrega / SRS  
 - `documentacion/Correcciones_Feedback_Docente.docx` — arreglos tras la revisión  
-- `documentacion/INSTRUCCIONES_PARA_CORRER.txt`  
-- `documentacion/Explicacion_del_Codigo_HuellitasVet.docx`  
-- `documentacion/Matriz_de_Pruebas_HuellitasVet.docx`  
-- `documentacion/HuellitasVet.postman_collection.json`
+- `documentacion/INSTRUCCIONES_PARA_CORRER.txt` — cómo correr API y Angular  
+- `documentacion/HuellitasVet.postman_collection.json` — colección Postman  
+- `documentacion/Registro_Validacion.md` — constancia de validación  
+- `documentacion/figuras/` — capturas y diagramas
