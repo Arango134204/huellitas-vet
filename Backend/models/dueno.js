@@ -38,6 +38,10 @@ const DuenoSchema = Schema({
         type: String,
         trim: true,
         maxlength: 150
+    },
+    activo: {
+        type: Boolean,
+        default: true
     }
 }, { timestamps: true });
 

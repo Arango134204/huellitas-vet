@@ -1,0 +1,264 @@
+{
+  "info": {
+    "name": "HuellitasVet API",
+    "description": "Colección de pruebas del proyecto final Desarrollo Web 2 — Juan José Arango",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3900" },
+    { "key": "duenoId", "value": "" },
+    { "key": "mascotaId", "value": "" },
+    { "key": "citaId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "01 Servidor",
+      "item": [
+        {
+          "name": "GET Servidor OK",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Dueños",
+      "item": [
+        {
+          "name": "Listar dueños",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/duenos"
+          }
+        },
+        {
+          "name": "Buscar dueños",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/duenos?buscar=laura"
+          }
+        },
+        {
+          "name": "Crear dueño",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Pedro Pérez\",\n  \"documento\": \"1088999888\",\n  \"telefono\": \"3101234567\",\n  \"email\": \"pedro@mail.com\",\n  \"direccion\": \"Centro, Pereira\"\n}"
+            },
+            "url": "{{baseUrl}}/api/dueno/save"
+          }
+        },
+        {
+          "name": "Crear dueño inválido",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Lu\",\n  \"documento\": \"1\",\n  \"telefono\": \"12\",\n  \"email\": \"malo\"\n}"
+            },
+            "url": "{{baseUrl}}/api/dueno/save"
+          }
+        },
+        {
+          "name": "Ver dueño",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/dueno/{{duenoId}}"
+          }
+        },
+        {
+          "name": "Actualizar dueño",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"telefono\": \"3209876543\"\n}"
+            },
+            "url": "{{baseUrl}}/api/dueno/{{duenoId}}"
+          }
+        },
+        {
+          "name": "Desactivar dueño",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/api/dueno/{{duenoId}}/desactivar"
+          }
+        },
+        {
+          "name": "Eliminar dueño",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/dueno/{{duenoId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Mascotas",
+      "item": [
+        {
+          "name": "Listar mascotas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/mascotas"
+          }
+        },
+        {
+          "name": "Filtrar por especie",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/mascotas?especie=perro"
+          }
+        },
+        {
+          "name": "Crear mascota",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Luna\",\n  \"especie\": \"gato\",\n  \"raza\": \"Siamés\",\n  \"peso\": 3.5,\n  \"dueno\": \"{{duenoId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mascota/save"
+          }
+        },
+        {
+          "name": "Crear mascota inválida",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"\",\n  \"especie\": \"dragon\",\n  \"peso\": -2,\n  \"dueno\": \"{{duenoId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/mascota/save"
+          }
+        },
+        {
+          "name": "Ver mascota + historial",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/mascota/{{mascotaId}}"
+          }
+        },
+        {
+          "name": "Subir imagen",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/mascota/upload-image/{{mascotaId}}"
+          }
+        },
+        {
+          "name": "Eliminar mascota",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/mascota/{{mascotaId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Citas (operación central)",
+      "item": [
+        {
+          "name": "Resumen",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/citas/resumen"
+          }
+        },
+        {
+          "name": "Listar citas",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/citas"
+          }
+        },
+        {
+          "name": "Filtrar pendientes",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/citas?estado=pendiente"
+          }
+        },
+        {
+          "name": "Agendar cita",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mascota\": \"{{mascotaId}}\",\n  \"fecha\": \"2026-11-20T10:00:00\",\n  \"motivo\": \"Control general\",\n  \"veterinario\": \"Dra. Salazar\",\n  \"origen\": \"web\"\n}"
+            },
+            "url": "{{baseUrl}}/api/cita/save"
+          }
+        },
+        {
+          "name": "Agendar en el pasado (regla)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mascota\": \"{{mascotaId}}\",\n  \"fecha\": \"2020-01-01T10:00:00\",\n  \"motivo\": \"Prueba\",\n  \"veterinario\": \"Dra. Salazar\"\n}"
+            },
+            "url": "{{baseUrl}}/api/cita/save"
+          }
+        },
+        {
+          "name": "Marcar atendida",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"atendida\",\n  \"observaciones\": \"Paciente estable\"\n}"
+            },
+            "url": "{{baseUrl}}/api/cita/{{citaId}}/estado"
+          }
+        },
+        {
+          "name": "Transición inválida",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"pendiente\"\n}"
+            },
+            "url": "{{baseUrl}}/api/cita/{{citaId}}/estado"
+          }
+        },
+        {
+          "name": "Cancelar cita",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"cancelada\"\n}"
+            },
+            "url": "{{baseUrl}}/api/cita/{{citaId}}/estado"
+          }
+        }
+      ]
+    }
+  ]
+}

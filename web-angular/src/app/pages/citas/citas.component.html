@@ -1,0 +1,109 @@
+<div class="page-head">
+  <div>
+    <h1>Citas</h1>
+    <p class="muted">Operación central: pendiente → atendida / cancelada</p>
+  </div>
+</div>
+
+@if (error) { <div class="alerta error">{{ error }}</div> }
+@if (ok) { <div class="alerta ok">{{ ok }}</div> }
+
+<section class="panel">
+  <h2>Agendar cita</h2>
+  <form [formGroup]="form" (ngSubmit)="guardar()">
+    <div class="form-grid">
+      <label>Mascota
+        <select formControlName="mascota">
+          <option value="">Seleccione…</option>
+          @for (m of mascotas; track m._id) {
+            <option [value]="m._id">{{ m.nombre }} ({{ m.dueno?.nombre }})</option>
+          }
+        </select>
+        @if (form.controls.mascota.touched && form.controls.mascota.invalid) {
+          <span class="error-campo">Obligatorio</span>
+        }
+      </label>
+      <label>Fecha
+        <input type="date" formControlName="fecha">
+      </label>
+      <label>Hora
+        <input type="time" formControlName="hora">
+      </label>
+      <label>Veterinario
+        <select formControlName="veterinario">
+          <option>Dra. Salazar</option>
+          <option>Dr. Mejía</option>
+          <option>Dra. Restrepo</option>
+        </select>
+      </label>
+      <label style="grid-column:1/-1">Motivo
+        <input formControlName="motivo" maxlength="200">
+        @if (form.controls.motivo.touched && form.controls.motivo.invalid) {
+          <span class="error-campo">Obligatorio</span>
+        }
+      </label>
+      <label style="grid-column:1/-1">Observaciones
+        <textarea formControlName="observaciones" rows="2"></textarea>
+      </label>
+    </div>
+    <div class="acciones" style="margin-top:1rem">
+      <button class="btn" type="submit" [disabled]="enviando">
+        {{ enviando ? 'Agendando…' : 'Agendar' }}
+      </button>
+    </div>
+  </form>
+</section>
+
+<div class="filtros">
+  <select [(ngModel)]="filtroEstado" (change)="cargar()">
+    <option value="">Todos los estados</option>
+    <option value="pendiente">Pendiente</option>
+    <option value="atendida">Atendida</option>
+    <option value="cancelada">Cancelada</option>
+  </select>
+  <input type="date" [(ngModel)]="filtroFecha" (change)="cargar()">
+  <button class="btn secundario" type="button" (click)="filtroFecha=''; filtroEstado=''; cargar()">Limpiar</button>
+</div>
+
+@if (carga) {
+  <div class="estado-carga">Cargando citas…</div>
+} @else if (citas.length === 0) {
+  <div class="estado-vacio">No hay citas con ese filtro.</div>
+} @else {
+  <table class="tabla">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Mascota</th>
+        <th>Dueño</th>
+        <th>Motivo</th>
+        <th>Veterinario</th>
+        <th>Origen</th>
+        <th>Estado</th>
+        <th>Gestión</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (c of citas; track c._id) {
+        <tr>
+          <td>{{ c.fecha | date:'yyyy-MM-dd HH:mm' }}</td>
+          <td>{{ c.mascota?.nombre }}</td>
+          <td>{{ c.mascota?.dueno?.nombre }}</td>
+          <td>{{ c.motivo }}</td>
+          <td>{{ c.veterinario }}</td>
+          <td>{{ c.origen }}</td>
+          <td><span class="badge" [class]="c.estado">{{ c.estado }}</span></td>
+          <td class="acciones">
+            @if (c.estado === 'pendiente') {
+              <button class="btn peque" type="button" (click)="cambiarEstado(c, 'atendida')">Atender</button>
+              <button class="btn peque secundario" type="button" (click)="cambiarEstado(c, 'cancelada')">Cancelar</button>
+              <button class="btn peque peligro" type="button" (click)="eliminar(c)">Eliminar</button>
+            } @else {
+              <span class="muted">Cerrada</span>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

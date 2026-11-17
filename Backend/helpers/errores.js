@@ -1,6 +1,5 @@
 'use strict'
 
-// Convierte los errores de Mongoose en respuestas HTTP entendibles
 function responderError(res, err, mensaje) {
     if (err.name === 'ValidationError') {
         const errores = Object.values(err.errors).map(e => e.message);

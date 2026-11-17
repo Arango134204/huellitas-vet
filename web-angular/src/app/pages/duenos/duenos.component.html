@@ -1,0 +1,92 @@
+<div class="page-head">
+  <div>
+    <h1>Dueños</h1>
+    <p class="muted">Gestión de clientes / tutores de mascotas</p>
+  </div>
+</div>
+
+@if (error) { <div class="alerta error">{{ error }}</div> }
+@if (ok) { <div class="alerta ok">{{ ok }}</div> }
+
+<section class="panel">
+  <h2>{{ editandoId ? 'Editar dueño' : 'Registrar dueño' }}</h2>
+  <form [formGroup]="form" (ngSubmit)="guardar()">
+    <div class="form-grid">
+      <label>Nombre
+        <input formControlName="nombre">
+        @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+          <span class="error-campo">Mínimo 3 caracteres</span>
+        }
+      </label>
+      <label>Documento
+        <input formControlName="documento">
+        @if (form.controls.documento.touched && form.controls.documento.invalid) {
+          <span class="error-campo">Obligatorio</span>
+        }
+      </label>
+      <label>Teléfono
+        <input formControlName="telefono">
+        @if (form.controls.telefono.touched && form.controls.telefono.invalid) {
+          <span class="error-campo">7 a 10 dígitos</span>
+        }
+      </label>
+      <label>Email
+        <input formControlName="email" type="email">
+        @if (form.controls.email.touched && form.controls.email.invalid) {
+          <span class="error-campo">Correo no válido</span>
+        }
+      </label>
+      <label>Dirección
+        <input formControlName="direccion">
+      </label>
+    </div>
+    <div class="acciones" style="margin-top:1rem">
+      <button class="btn" type="submit" [disabled]="enviando">
+        {{ enviando ? 'Guardando…' : (editandoId ? 'Actualizar' : 'Guardar') }}
+      </button>
+      @if (editandoId) {
+        <button class="btn secundario" type="button" (click)="cancelar()">Cancelar</button>
+      }
+    </div>
+  </form>
+</section>
+
+<div class="filtros">
+  <input placeholder="Buscar por nombre" [(ngModel)]="buscar" [ngModelOptions]="{standalone:true}" (keyup.enter)="cargar()">
+  <button class="btn secundario" type="button" (click)="cargar()">Buscar</button>
+</div>
+
+@if (carga) {
+  <div class="estado-carga">Cargando dueños…</div>
+} @else if (duenos.length === 0) {
+  <div class="estado-vacio">No hay dueños registrados.</div>
+} @else {
+  <table class="tabla">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Documento</th>
+        <th>Teléfono</th>
+        <th>Email</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (d of duenos; track d._id) {
+        <tr>
+          <td>{{ d.nombre }}</td>
+          <td>{{ d.documento }}</td>
+          <td>{{ d.telefono }}</td>
+          <td>{{ d.email }}</td>
+          <td>{{ d.activo === false ? 'Inactivo' : 'Activo' }}</td>
+          <td class="acciones">
+            <button class="btn peque secundario" type="button" (click)="editar(d)">Editar</button>
+            <button class="btn peque secundario" type="button" (click)="desactivar(d)">Desactivar</button>
+            <button class="btn peque peligro" type="button" (click)="eliminar(d)">Eliminar</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

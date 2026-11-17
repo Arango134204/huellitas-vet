@@ -1,0 +1,31 @@
+.detalle-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 800px) {
+  .detalle-grid {
+    grid-template-columns: 280px 1fr;
+  }
+}
+
+.foto {
+  width: 100%;
+  max-width: 240px;
+  border-radius: 12px;
+  display: block;
+  object-fit: cover;
+  aspect-ratio: 1;
+  background: #e8dfd0;
+}
+
+.ficha {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+}
+
+.ficha li {
+  padding: .35rem 0;
+  border-bottom: 1px dashed #e2d8c6;
+}

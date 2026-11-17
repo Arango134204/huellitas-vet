@@ -10,7 +10,6 @@ const controller = {
         try {
             const dueno = new Dueno(req.body);
             const duenoStored = await dueno.save();
-
             return res.status(201).send({ status: 'success', dueno: duenoStored });
         } catch (err) {
             return responderError(res, err, 'Error al guardar el dueño');
@@ -23,9 +22,10 @@ const controller = {
             if (req.query.buscar) {
                 filtro.nombre = { $regex: req.query.buscar, $options: 'i' };
             }
+            if (req.query.activo === 'true') filtro.activo = true;
+            if (req.query.activo === 'false') filtro.activo = false;
 
             const duenos = await Dueno.find(filtro).sort({ nombre: 1 });
-
             return res.status(200).send({ status: 'success', total: duenos.length, duenos });
         } catch (err) {
             return responderError(res, err, 'Error al obtener los dueños');
@@ -35,13 +35,10 @@ const controller = {
     getDueno: async (req, res) => {
         try {
             const dueno = await Dueno.findById(req.params.id);
-
             if (!dueno) {
                 return res.status(404).send({ status: 'error', message: 'No existe el dueño' });
             }
-
             const mascotas = await Mascota.find({ dueno: dueno._id });
-
             return res.status(200).send({ status: 'success', dueno, mascotas });
         } catch (err) {
             return responderError(res, err, 'Error al obtener el dueño');
@@ -55,11 +52,9 @@ const controller = {
                 req.body,
                 { returnDocument: 'after', runValidators: true }
             );
-
             if (!duenoUpdated) {
                 return res.status(404).send({ status: 'error', message: 'No existe el dueño' });
             }
-
             return res.status(200).send({ status: 'success', dueno: duenoUpdated });
         } catch (err) {
             return responderError(res, err, 'Error al actualizar el dueño');
@@ -68,24 +63,37 @@ const controller = {
 
     delete: async (req, res) => {
         try {
-            const tieneMascotas = await Mascota.exists({ dueno: req.params.id });
-
+            const tieneMascotas = await Mascota.exists({ dueno: req.params.id, activa: true });
             if (tieneMascotas) {
                 return res.status(409).send({
                     status: 'error',
-                    message: 'No se puede borrar: el dueño tiene mascotas registradas'
+                    message: 'No se puede eliminar: el dueño tiene mascotas activas. Desactívelo o reasigne las mascotas.'
                 });
             }
 
             const duenoRemoved = await Dueno.findByIdAndDelete(req.params.id);
-
             if (!duenoRemoved) {
                 return res.status(404).send({ status: 'error', message: 'No existe el dueño' });
             }
-
             return res.status(200).send({ status: 'success', dueno: duenoRemoved });
         } catch (err) {
             return responderError(res, err, 'Error al borrar el dueño');
+        }
+    },
+
+    desactivar: async (req, res) => {
+        try {
+            const dueno = await Dueno.findByIdAndUpdate(
+                req.params.id,
+                { activo: false },
+                { returnDocument: 'after' }
+            );
+            if (!dueno) {
+                return res.status(404).send({ status: 'error', message: 'No existe el dueño' });
+            }
+            return res.status(200).send({ status: 'success', dueno });
+        } catch (err) {
+            return responderError(res, err, 'Error al desactivar el dueño');
         }
     }
 

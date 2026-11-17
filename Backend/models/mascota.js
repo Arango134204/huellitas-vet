@@ -37,6 +37,10 @@ const MascotaSchema = Schema({
     imagen: {
         type: String,
         default: null
+    },
+    activa: {
+        type: Boolean,
+        default: true
     }
 }, { timestamps: true });
 

@@ -1,0 +1,58 @@
+<div class="page-head">
+  <div>
+    <h1>Agenda del día</h1>
+    <p class="muted">Resumen de operaciones y citas de hoy</p>
+  </div>
+  <div class="acciones">
+    <a class="btn secundario" routerLink="/duenos">Dueños</a>
+    <a class="btn secundario" routerLink="/mascotas">Mascotas</a>
+    <a class="btn" routerLink="/citas">Gestionar citas</a>
+  </div>
+</div>
+
+@if (error) {
+  <div class="alerta error">{{ error }}</div>
+}
+
+@if (carga) {
+  <div class="estado-carga">Cargando resumen…</div>
+} @else if (resumen) {
+  <div class="grid-cards">
+    <div class="stat"><span>Pendientes</span><strong>{{ resumen.porEstado.pendiente }}</strong></div>
+    <div class="stat"><span>Atendidas</span><strong>{{ resumen.porEstado.atendida }}</strong></div>
+    <div class="stat"><span>Canceladas</span><strong>{{ resumen.porEstado.cancelada }}</strong></div>
+    <div class="stat"><span>Citas hoy</span><strong>{{ resumen.citasHoy }}</strong></div>
+  </div>
+
+  <section class="panel" style="margin-top:1.5rem">
+    <h2>Citas de hoy</h2>
+    @if (citasHoy.length === 0) {
+      <p class="estado-vacio">No hay citas programadas para hoy.</p>
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Mascota</th>
+            <th>Dueño</th>
+            <th>Motivo</th>
+            <th>Veterinario</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of citasHoy; track c._id) {
+            <tr>
+              <td>{{ c.fecha | date:'HH:mm' }}</td>
+              <td>{{ c.mascota?.nombre }}</td>
+              <td>{{ c.mascota?.dueno?.nombre }}</td>
+              <td>{{ c.motivo }}</td>
+              <td>{{ c.veterinario }}</td>
+              <td><span class="badge" [class]="c.estado">{{ c.estado }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+}

@@ -1,0 +1,17 @@
+<header class="topbar">
+  <a routerLink="/" class="brand">Huellitas<em>Vet</em></a>
+  <nav>
+    <a routerLink="/" routerLinkActive="activo" [routerLinkActiveOptions]="{exact:true}">Inicio</a>
+    <a routerLink="/duenos" routerLinkActive="activo">Dueños</a>
+    <a routerLink="/mascotas" routerLinkActive="activo">Mascotas</a>
+    <a routerLink="/citas" routerLinkActive="activo">Citas</a>
+  </nav>
+</header>
+
+<main class="contenedor">
+  <router-outlet />
+</main>
+
+<footer class="pie">
+  Panel de administración · Clínica veterinaria Pereira · Desarrollo Web II
+</footer>

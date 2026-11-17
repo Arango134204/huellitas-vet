@@ -1,0 +1,64 @@
+<a routerLink="/mascotas" class="muted">← Volver a mascotas</a>
+
+@if (error) { <div class="alerta error" style="margin-top:1rem">{{ error }}</div> }
+@if (ok) { <div class="alerta ok" style="margin-top:1rem">{{ ok }}</div> }
+
+@if (carga) {
+  <div class="estado-carga">Cargando…</div>
+} @else if (mascota) {
+  <div class="page-head" style="margin-top:1rem">
+    <div>
+      <h1>{{ mascota.nombre }}</h1>
+      <p class="muted">{{ mascota.especie }} · {{ mascota.raza }} · Dueño: {{ mascota.dueno?.nombre }}</p>
+    </div>
+  </div>
+
+  <div class="detalle-grid">
+    <section class="panel">
+      <h2>Ficha</h2>
+      @if (urlImg(); as src) {
+        <img class="foto" [src]="src" [alt]="mascota.nombre">
+      } @else {
+        <p class="muted">Sin imagen</p>
+      }
+      <label class="btn secundario" style="display:inline-block;margin-top:1rem">
+        {{ subiendo ? 'Subiendo…' : 'Subir / cambiar foto' }}
+        <input type="file" accept=".png,.jpg,.jpeg,.gif,.webp" hidden (change)="onFile($event)" [disabled]="subiendo">
+      </label>
+      <ul class="ficha">
+        <li><strong>Peso:</strong> {{ mascota.peso ? mascota.peso + ' kg' : '—' }}</li>
+        <li><strong>Nacimiento:</strong> {{ mascota.fechaNacimiento ? (mascota.fechaNacimiento | date:'yyyy-MM-dd') : '—' }}</li>
+        <li><strong>Teléfono dueño:</strong> {{ mascota.dueno?.telefono }}</li>
+        <li><strong>Email dueño:</strong> {{ mascota.dueno?.email }}</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>Historial de citas</h2>
+      @if (historial.length === 0) {
+        <p class="estado-vacio">Sin citas registradas.</p>
+      } @else {
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Motivo</th>
+              <th>Veterinario</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of historial; track c._id) {
+              <tr>
+                <td>{{ c.fecha | date:'yyyy-MM-dd HH:mm' }}</td>
+                <td>{{ c.motivo }}</td>
+                <td>{{ c.veterinario }}</td>
+                <td><span class="badge" [class]="c.estado">{{ c.estado }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  </div>
+}
