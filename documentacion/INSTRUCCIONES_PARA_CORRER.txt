@@ -48,7 +48,7 @@ El contenido de .env debe ser:
   PORT=3900
   MONGODB_URI=mongodb://127.0.0.1:27017/huellitas-vet
 
-Cargue los datos de prueba (3 dueños, 4 mascotas, 4 citas):
+Cargue la base de datos inicial de la clínica (dueños, mascotas y citas):
 
   npm run seed
 
@@ -139,7 +139,7 @@ Esperado: 200
 ----- PRUEBA 2. Listar dueños -----
 Método:  GET
 URL:     http://localhost:3900/api/duenos
-Esperado: 200 → status:"success", total:3 (si corrió npm run seed)
+Esperado: 200 → status:"success" y la lista de dueños (si corrió npm run seed)
 
 
 ----- PRUEBA 3. Buscar dueño por nombre -----
