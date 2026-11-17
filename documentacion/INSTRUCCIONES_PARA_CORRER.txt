@@ -1,0 +1,160 @@
+================================================================================
+  HUELLITASVET — INSTRUCCIONES PARA CORRER EL PROYECTO
+  Juan José Arango · Desarrollo Web II · Entrega final
+  Repositorio: https://github.com/Arango134204/huellitas-vet
+================================================================================
+
+REQUISITOS PREVIOS
+------------------
+1. Node.js instalado (versión 20 o superior). Compruebe con:
+      node -v
+      npm -v
+
+2. MongoDB instalado y CORRIENDO en local (puerto 27017).
+   En Windows puede verificar el servicio "MongoDB" en services.msc
+   o ejecutar en PowerShell:
+      Get-Service *mongo*
+
+3. Un navegador (Chrome o Edge) y, opcionalmente, Postman.
+
+
+--------------------------------------------------------------------------------
+PASO 1. ABRIR EL PROYECTO
+--------------------------------------------------------------------------------
+Abra la carpeta del proyecto en VS Code / Cursor:
+
+  C:\Users\User\Desktop\UAM\DESARROLLO WEB II\huellitas-vet
+
+La estructura importante es:
+  Backend\        -> API (Node + Express + MongoDB)
+  web-angular\    -> Panel de administración (Angular)
+  documentacion\  -> Documentos, Postman e instrucciones
+
+
+--------------------------------------------------------------------------------
+PASO 2. CONFIGURAR Y ENCENDER LA API (Backend)
+--------------------------------------------------------------------------------
+Abra una terminal (Ctrl + ñ en VS Code) y ejecute:
+
+  cd Backend
+  npm install
+
+Si no existe el archivo .env, créelo a partir del ejemplo:
+
+  copy .env.example .env
+
+El contenido de .env debe ser:
+
+  PORT=3900
+  MONGODB_URI=mongodb://127.0.0.1:27017/huellitas-vet
+
+Cargue los datos de prueba (3 dueños, 4 mascotas, 4 citas):
+
+  npm run seed
+
+Arranque el servidor:
+
+  npm start
+
+Debe aparecer algo como:
+
+  Conexión a MongoDB establecida (mongodb://127.0.0.1:27017/huellitas-vet)
+  Servidor corriendo en http://localhost:3900
+
+Compruebe en el navegador o Postman:
+
+  GET http://localhost:3900/
+  Respuesta esperada: {"message":"Servidor OK", ...}
+
+DEJE ESTA TERMINAL ABIERTA. Si la cierra, la API se apaga.
+
+
+--------------------------------------------------------------------------------
+PASO 3. ENCENDER EL PANEL ANGULAR (Frontend)
+--------------------------------------------------------------------------------
+Abra UNA SEGUNDA terminal y ejecute:
+
+  cd web-angular
+  npm install
+  npm start
+
+Cuando termine de compilar, abra:
+
+  http://localhost:4200
+
+Ahí verá el panel: Inicio, Dueños, Mascotas y Citas.
+
+
+--------------------------------------------------------------------------------
+PASO 4. DEMOSTRACIÓN RÁPIDA (qué mostrar)
+--------------------------------------------------------------------------------
+1. En http://localhost:4200 ver el resumen y las citas de hoy.
+2. Ir a Dueños: registrar uno nuevo, buscar por nombre.
+3. Ir a Mascotas: registrar una mascota ligada a un dueño.
+4. Entrar a Detalle de una mascota y subir una foto (PNG/JPG).
+5. Ir a Citas: agendar una cita con fecha FUTURA.
+6. Pulsar "Atender" o "Cancelar" en una cita pendiente.
+7. En Postman (opcional): importar
+     documentacion\HuellitasVet.postman_collection.json
+   y probar una cita en el pasado (debe fallar con 400)
+   o una transición inválida de estado (debe fallar con 409).
+
+
+--------------------------------------------------------------------------------
+COMANDOS RESUMEN (copiar y pegar)
+--------------------------------------------------------------------------------
+Terminal 1 — API:
+  cd Backend
+  npm install
+  copy .env.example .env
+  npm run seed
+  npm start
+
+Terminal 2 — Angular:
+  cd web-angular
+  npm install
+  npm start
+
+URLs:
+  API:     http://localhost:3900
+  Panel:   http://localhost:4200
+
+
+--------------------------------------------------------------------------------
+PROBLEMAS FRECUENTES
+--------------------------------------------------------------------------------
+- "Error al conectar con MongoDB"
+  -> MongoDB no está iniciado. Arranque el servicio MongoDB.
+
+- El panel dice "No se pudo conectar con la API"
+  -> La API no está corriendo en el puerto 3900. Revise la Terminal 1.
+
+- Puerto 3900 o 4200 ocupado
+  -> Cierre el proceso anterior (Ctrl+C) o reinicie el equipo.
+
+- npm install falla
+  -> Verifique conexión a internet y que Node esté instalado.
+
+- La foto no sube
+  -> Use PNG, JPG, JPEG, GIF o WEBP de máximo 2 MB.
+  -> El campo del formulario debe llamarse "imagen".
+
+
+--------------------------------------------------------------------------------
+APAGAR EL PROYECTO
+--------------------------------------------------------------------------------
+En cada terminal donde corra un servidor, pulse:
+
+  Ctrl + C
+
+
+--------------------------------------------------------------------------------
+NO ENTREGAR / NO SUBIR
+--------------------------------------------------------------------------------
+- node_modules\
+- Backend\.env   (sí entregar .env.example)
+- Archivos temporales o ~$*.docx
+
+
+Fin del archivo de instrucciones.
+================================================================================
